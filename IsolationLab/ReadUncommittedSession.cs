@@ -4,14 +4,10 @@
     {
         public static async Task BeginReadUncommittedSession()
         {
-            Console.Write("> ");
-            var initialCommand = Console.ReadLine()?.Trim()!;
-
             try
             {
                 await using var logFs = new FileStream(Program.logPath, FileMode.Append, FileAccess.Write);
                 await using var logStreamWriter = new StreamWriter(logFs, leaveOpen: true) { AutoFlush = true };
-                await MessageWriter.COMMIT(initialCommand, logStreamWriter, persistent: true);
 
                 while (true)
                 {
@@ -41,16 +37,18 @@
                         await logStreamWriter.DisposeAsync();
                         await logFs.DisposeAsync();
 
-                        await MessageWriter.ROLLBACK(Program.logPath, Program.dataPath, dataDeletion: true);
+                        await MessageWriter.ROLLBACK(Program.logPath, Program.dataPath, isPersist: true);
                         Environment.Exit(0);
                     }
-                    await MessageWriter.COMMIT(cmd!, logStreamWriter, persistent: true);
+                    await MessageWriter.WriteData(cmd!, logStreamWriter, persistent: true);
                 }
             }
             catch (Exception ex)
             {
-
-                throw new Exception(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+                Console.WriteLine(ex.InnerException);
+                Console.WriteLine(ex.Message);
+                throw;
             }
         }
     }

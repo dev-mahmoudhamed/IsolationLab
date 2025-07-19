@@ -2,27 +2,42 @@
 {
     public static class MessageWriter
     {
-        public static async Task COMMIT(string message, StreamWriter streamWriter, bool persistent = false)
+        public static async Task WriteData(string message, StreamWriter streamWriter, bool persistent = false)
         {
             await streamWriter.WriteLineAsync(message);
 
             if (persistent)
             {
-                try
-                {
-                    await using var dataFs = new FileStream(Program.dataPath, FileMode.Append, FileAccess.Write);
-                    await using var dataStreamWriter = new StreamWriter(dataFs);
-                    await dataStreamWriter.WriteLineAsync(message);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception(ex.Message);
-                }
-
+                await COMMIT(message);
             }
         }
 
-        public async static Task ROLLBACK(string logPath, string dataPath, bool dataDeletion = false)
+        public static async Task ClearLog()
+        {
+            await using FileStream logFs = new FileStream(
+                 Program.logPath,
+                 FileMode.Truncate,
+                 FileAccess.Write,
+                 FileShare.ReadWrite);
+
+            logFs.SetLength(0);
+        }
+
+        public async static Task COMMIT(string message)
+        {
+            try
+            {
+                await using var dataFs = new FileStream(Program.dataPath, FileMode.Append, FileAccess.Write);
+                await using var dataStreamWriter = new StreamWriter(dataFs);
+                await dataStreamWriter.WriteLineAsync(message);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async static Task ROLLBACK(string logPath, string dataPath, bool isPersist = false)
         {
 
             await using var logStream = new FileStream(logPath, FileMode.Open, FileAccess.ReadWrite);
@@ -31,7 +46,7 @@
             logStream.SetLength(0);
             await logStream.DisposeAsync();
 
-            if (dataDeletion)
+            if (isPersist)
             {
                 using var dataStream = new FileStream(dataPath, FileMode.Open, FileAccess.ReadWrite);
                 if (dataStream.Length == 0) return;
