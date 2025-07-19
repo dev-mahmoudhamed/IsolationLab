@@ -16,7 +16,6 @@ namespace IsolationLab
             {
                 if (!_isLocked)
                 {
-                    _logFs.Seek(0, SeekOrigin.End);
                     SetLock(true);
                     _isLocked = GetLock();
                 }
@@ -29,13 +28,11 @@ namespace IsolationLab
                     {
                         while (GetLock())
                         {
-                            Console.WriteLine("_isLocked => " + _isLocked);
-
                             Thread.Sleep(100);
                         }
                         var data = await MessageReader.ReadData();
-                        Console.WriteLine(data.Length != 0 ? data : "File is empty");
-                        return;
+                        //Console.WriteLine(data.Length != 0 ? data : "File is empty");
+                        continue;
                     }
 
                     if (cmd.ToUpper() == "COMMIT")
@@ -48,12 +45,11 @@ namespace IsolationLab
                         string envNewLine = Environment.NewLine;
                         data = data.Substring(0, data.Length - envNewLine.Length);
                         await MessageWriter.COMMIT(data);
-                        Console.WriteLine("\nData__ : " + data);
                         await MessageWriter.ClearLog();
 
                         SetLock(false);
                         _isLocked = GetLock();
-                        return;
+                        continue;
                     }
 
                     if (cmd.ToUpper() == "ROLLBACK")
@@ -64,7 +60,7 @@ namespace IsolationLab
                         await _logFs.DisposeAsync();
 
                         await MessageWriter.ROLLBACK(Program.logPath, Program.dataPath, isPersist: false);
-                        return;
+                        continue;
                     }
                     await MessageWriter.WriteData(cmd!, _logStreamWriter, persistent: false);
                 }

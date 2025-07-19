@@ -15,7 +15,7 @@
             }
 
             var iso = AskUserForIsolationLevel();
-            Console.WriteLine($"Session started with [{((IsolationLevel)iso)}] implementation.\n");
+            Console.WriteLine($"Begin transaction with [{((IsolationLevel)iso)}] implementation.\n");
             await SessionContext.StartSessionAsync(iso);
         }
 
@@ -26,18 +26,15 @@
             Console.WriteLine("├──────────────────────────────────────────┤");
             Console.WriteLine("│  1. Read Uncommitted  (NOLOCK)           │");
             Console.WriteLine("│  2. Read Committed    (default)          │");
-            Console.WriteLine("│  3. Repeatable Read                      │");
-            Console.WriteLine("│  4. Snapshot                             │");
-            Console.WriteLine("│  5. Serializable                         │");
             Console.WriteLine("└──────────────────────────────────────────┘");
 
             while (true)
             {
-                Console.Write("Enter 1‑5 : ");
+                Console.Write("Enter 1‑2 : ");
                 var choice = Console.ReadLine()?.Trim();
                 int iso;
                 bool isValidIso = int.TryParse(choice, out iso);
-                if (isValidIso && (iso > 0 && iso < 6))
+                if (isValidIso && (iso > 0 && iso < 3))
                 {
                     return iso;
                 }
